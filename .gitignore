@@ -1,0 +1,12 @@
+.bash_logout
+.bashrc
+.cache/
+.cloud-locale-test.skip
+.gitconfig
+.local/
+.profile
+.python_history
+.ssh/
+.sudo_as_admin_successful
+.venvs/
+.vscode/
