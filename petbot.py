@@ -13,7 +13,7 @@ import torchvision
 
 token = os.getenv("DISCORD_TOKEN")
 
-client = commands.Bot(command_prefix='<@!886644051829460992> ', help_command=None)
+client = commands.Bot(command_prefix=['<@!886644051829460992> ', '<@886644051829460992> ', '<@!888217121451044894> ', '<@888217121451044894> '], help_command=None) # '<@!886644051829460992> ')
 
 @client.event
 async def on_ready():
@@ -68,5 +68,9 @@ async def mute(context):
 @client.command(aliases=['leave pet'])
 async def abandon(context):
     await context.send('Really? That\'s so heartless. Also, you don\t have a pet now anyways, so no.')
+
+@client.command()
+async def printtest(context, *, message):
+    print(message)
 
 client.run(token)
