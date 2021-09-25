@@ -66,4 +66,6 @@ for filename in os.listdir(os.path.join(path, 'cogs')):
     if filename.endswith('.py'):
         client.load_extension(f'cogs.{filename[:-3]}')
 
+pet_engine = engine.PetBotEngine()
+pet_engine.start()
 client.run(token)

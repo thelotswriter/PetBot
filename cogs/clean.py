@@ -20,11 +20,13 @@ class Clean(commands.Cog):
                     if pet_name in message:
                         counter += 1
                         pet_manager.player_pets[pid][pet_name].clean()
+                        await context.send(f'{pet_name} was cleaned.')
                 if counter == 0:
                     await context.send(f'No pets named {message} for you, <@{pid}>.')
             else:
                 for pet_name in pet_manager.player_pets[pid].keys():
                     pet_manager.player_pets[pid][pet_name].clean()
+                await context.send(f'Your pets were cleaned, <@{pid}>')
         else:
             await context.send('Sorry, no pets to clean!')
 

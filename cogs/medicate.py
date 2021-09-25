@@ -20,11 +20,13 @@ class Medicate(commands.Cog):
                     if pet_name in message:
                         counter += 1
                         pet_manager.player_pets[pid][pet_name].medicate()
+                        await context.send(f'{pet_name} was medicated.')
                 if counter == 0:
                     await context.send(f'No pets named {message} for you, <@{pid}>.')
             else:
                 for pet_name in pet_manager.player_pets[pid].keys():
                     pet_manager.player_pets[pid][pet_name].medicate()
+                await context.send(f'Your pets were medicated, <@{pid}>.')
         else:
             await context.send('Sorry, no pets to medicate!')
 

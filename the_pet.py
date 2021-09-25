@@ -137,14 +137,20 @@ class Pet:
     #################LEARNED BEHAVIORS#################
 
     def choose_to_wake(self):
-        if self.current_sleepiness >= self.max_sleepiness:
+        if self.lights and self.current_sleepiness <= 0.5 * self.max_sleepiness:
+            self.asleep = False
+            return True
+        elif self.current_sleepiness <= 0.0:
             self.asleep = False
             return True
         else:
             return False
 
     def choose_to_sleep(self):
-        if self.current_sleepiness >= self.max_sleepiness * 0.8:
+        if self.lights and self.current_sleepiness >= self.max_sleepiness * 0.9:
+            self.asleep = True
+            return True
+        elif self.current_sleepiness >= 0.7 * self.max_sleepiness:
             self.asleep = True
             return True
         else:

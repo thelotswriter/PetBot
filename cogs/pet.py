@@ -20,12 +20,13 @@ class Pet(commands.Cog):
                     if pet_name in message:
                         counter += 1
                         pet_manager.player_pets[pid][pet_name].pet()
+                        await context.send(f'{pet_name} was petted.')
                 if counter == 0:
                     await context.send(f'No pets named {message} for you, <@{pid}>.')
             else:
                 for pet_name in pet_manager.player_pets[pid].keys():
-                    print(pet_name)
                     pet_manager.player_pets[pid][pet_name].pet()
+                await context.send(f'Your pets have been petted, <@{pid}>.')
         else:
             await context.send('Sorry, no pets to clean!')
 
