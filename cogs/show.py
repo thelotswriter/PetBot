@@ -7,9 +7,9 @@ class Show(commands.Cog):
     def __init__(self, client):
         self.client = client
 
-    @commands.command(brief='Take a look at your pet')
-    async def show(self, context):
-        await context.send('Did you really expect to see something without a pet?')
+    @commands.command(brief='[pet] Take a look at your pet')
+    async def show(self, context, *, message=None):
+        await context.send('Not quite ready.')
 
 
 def setup(client):

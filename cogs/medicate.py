@@ -4,13 +4,13 @@ import pet_manager
 import the_pet
 
 
-class Pet(commands.Cog):
+class Medicate(commands.Cog):
 
     def __init__(self, client):
         self.client = client
 
-    @commands.command(brief='[pet] Give your pet some attention')
-    async def pet(self, context, *, message=None):
+    @commands.command(brief='[pet] Give your sick pet medicine')
+    async def medicate(self, context, *, message=None):
         player = context.author
         pid = player.id
         if pid in pet_manager.player_pets:
@@ -19,16 +19,15 @@ class Pet(commands.Cog):
                 for pet_name in pet_manager.player_pets[pid].keys():
                     if pet_name in message:
                         counter += 1
-                        pet_manager.player_pets[pid][pet_name].pet()
+                        pet_manager.player_pets[pid][pet_name].medicate()
                 if counter == 0:
                     await context.send(f'No pets named {message} for you, <@{pid}>.')
             else:
                 for pet_name in pet_manager.player_pets[pid].keys():
-                    print(pet_name)
-                    pet_manager.player_pets[pid][pet_name].pet()
+                    pet_manager.player_pets[pid][pet_name].medicate()
         else:
-            await context.send('Sorry, no pets to clean!')
+            await context.send('Sorry, no pets to medicate!')
 
 
 def setup(client):
-    client.add_cog(Pet(client))
+    client.add_cog(Medicate(client))

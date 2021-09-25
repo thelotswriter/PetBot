@@ -60,6 +60,7 @@ async def load(ctx, extension):
 async def unload(ctx, extension):
     client.unload_extension(f'cogs.{extension}')
 
+
 path = os.path.dirname(os.path.abspath(__file__))
 for filename in os.listdir(os.path.join(path, 'cogs')):
     if filename.endswith('.py'):
