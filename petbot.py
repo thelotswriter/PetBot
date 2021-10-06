@@ -1,8 +1,10 @@
+import asyncio
 import os
 import random
 import discord
 from discord.ext import commands
 
+import image_expander
 import petbotengine as engine
 
 import numpy as np
@@ -66,6 +68,5 @@ for filename in os.listdir(os.path.join(path, 'cogs')):
     if filename.endswith('.py'):
         client.load_extension(f'cogs.{filename[:-3]}')
 
-pet_engine = engine.PetBotEngine()
-pet_engine.start()
+asyncio.get_event_loop().create_task(engine.update())
 client.run(token)

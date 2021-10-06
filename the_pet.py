@@ -1,38 +1,66 @@
 import datetime
+import os
 import discord
 from discord.ext import commands
+import random
+
+from the_egg import Egg
+import image_expander
 
 
 class Pet:
 
-    def __init__(self, player_id, pet_id, name='', level=0, birthday=datetime.datetime.now(), current_food=1.0, max_food=10, hunger_rate=1.0, current_happiness=1.0, max_happiness=10, sadness_rate=1.0, current_clean=1.0, max_clean=20, dirt_rate=1.0, immunity=0.5, sick=False, sleepiness=0, max_sleepiness=10, sleepiness_rate=1.0, sleepiness_recovery_rate=1.0, asleep=False, lights=True, image=None, timestamp=datetime.datetime.now(), mute=False, context=None):
+    def __init__(self, player_id, name='', level=0, birthday=datetime.datetime.now(), current_food=0.3, max_food=5,
+                 base_food=5, hunger_rate=1.5, base_hunger_rate=1.5, current_happiness=0.5, max_happiness=5, base_happiness=5, sadness_rate=1.5, base_sadness_rate=1.5, current_clean=1.0, max_clean=5, base_clean=5, dirt_rate=0.75, base_dirt_rate=0.75, immunity=0.5, base_immunity=0.5, sick=False, sleepiness=0, max_sleepiness=5, base_sleepiness=5, sleepiness_rate=1.5, base_sleepiness_rate=1.5, sleepiness_recovery_rate=1.5, base_sleepiness_recovery_rate=1.5, asleep=False, lights=True, dna=[], timestamp=datetime.datetime.now(), mute=False, context=None, age_tracker=0):
         self.player_id = player_id
-        self.pet_id = pet_id
         self.name = name
         self.level = level
         self.birthday = birthday
         self.max_food = float(max_food)
+        self.base_food = float(base_food)
         self.current_food = current_food * self.max_food
         self.hunger_rate = float(hunger_rate)
+        self.base_hunger_rate = float(base_hunger_rate)
         self.max_happiness = float(max_happiness)
+        self.base_happiness = float(base_happiness)
         self.current_happiness = current_happiness * self.max_happiness
         self.sadness_rate = float(sadness_rate)
+        self.base_sadness_rate = float(base_sadness_rate)
         self.max_cleanliness = float(max_clean)
+        self.base_cleanliness = float(base_clean)
         self.cleanliness = current_clean * self.max_cleanliness
         self.dirt_rate = float(dirt_rate)
+        self.base_dirt_rate = float(base_dirt_rate)
         self.immunity = float(immunity)
+        self.base_immunity = float(base_immunity)
         self.sick = sick
         self.max_sleepiness = float(max_sleepiness)
+        self.base_sleepiness = float(base_sleepiness)
         self.current_sleepiness = sleepiness * self.max_sleepiness
-        self.sleepiness_rate = sleepiness_rate
-        self.sleepiness_recovery_rate = sleepiness_recovery_rate
+        self.sleepiness_rate = float(sleepiness_rate)
+        self.base_sleepiness_rate = float(base_sleepiness_rate)
+        self.sleepiness_recovery_rate = float(sleepiness_recovery_rate)
+        self.base_sleepiness_recovery_rate = float(base_sleepiness_recovery_rate)
         self.asleep = asleep
         self.lights = lights
-        self.image = image
+        self.age_tracker = age_tracker
+        self.dna = dna
+        if len(dna) == 0:
+            self.dna.append(random.randint(1,4))
+        if len(dna) == 1:
+            self.generate_dna()
         self.last_check_time = timestamp
         self.alive = True
         self.mute = mute
         self.context = context
+        # Care tracking
+        self.avg_food = float(0)
+        self.avg_happiness = float(0)
+        self.avg_cleanliness = float(0)
+        self.avg_sleepiness = float(0)
+        self.avg_sick = float(0)
+        self.tot_mins = float(0)
+        # Update pet
         self.update(loading_update=True)
 
     def set_context(self, context):
@@ -64,6 +92,16 @@ class Pet:
             elif self.asleep and self.level > 0:
                 if self.choose_to_wake():
                     self.choose_to_alert()
+            if self.alive and not loading_update:
+                up_mins = float(up_time.seconds) / 60 + float(up_time.days * 1440)
+                self.avg_food += up_mins * self.current_food / self.max_food
+                self.avg_happiness += up_mins * self.current_happiness / self.max_happiness
+                self.avg_cleanliness += up_mins * self.cleanliness / self.max_cleanliness
+                self.avg_sleepiness += up_mins * self.current_sleepiness / self.max_sleepiness
+                if self.sick:
+                    self.avg_sick += up_mins
+                self.tot_mins += up_mins
+        self.update_level(age)
         self.last_check_time = cur_time
 
     def sleep_update(self, hours):
@@ -80,6 +118,11 @@ class Pet:
         self.current_happiness -= self.sadness_rate * hours
         self.current_sleepiness += self.sleepiness_rate * hours
         self.cleanliness -= self.dirt_rate * hours
+        cleanness_ratio = self.cleanliness / self.max_cleanliness
+        if self.immunity < (1.0 - cleanness_ratio):
+            sick_roll = random.random()
+            if sick_roll > self.immunity:
+                self.sick = True
         if self.sick:
             self.cleanliness -= self.dirt_rate * hours
         self.current_food = max(self.current_food, 0.0)
@@ -87,10 +130,83 @@ class Pet:
         self.current_sleepiness = min(self.current_sleepiness, self.max_sleepiness)
         self.choose_to_sleep()
 
+    def update_level(self, age):
+        if self.level == 0:
+            self.level = 1
+        if self.level == 1 and (age.days > 0 or age.seconds > 60 * 60 * 4):
+            self.level = 2
+            self.max_food *= 1.5
+            self.hunger_rate *= 1.5
+            self.max_happiness *= 1.5
+            self.sadness_rate *= 0.8
+            self.max_cleanliness *= 1.5
+            self.dirt_rate *= 0.8
+            self.max_sleepiness *= 1.5
+            self.sleepiness_rate *= 0.8
+            self.sleepiness_recovery_rate *= 1.2
+            self.immunity = min(0.9, self.immunity * 1.2)
+        if self.level == 2 and age.days > 0:
+            self.level = 3
+            self.max_food *= 1.5
+            self.hunger_rate *= 1.5
+            self.max_happiness *= 1.5
+            self.sadness_rate *= 0.8
+            self.max_cleanliness *= 1.5
+            self.dirt_rate *= 0.8
+            self.max_sleepiness *= 1.5
+            self.sleepiness_rate *= 0.8
+            self.sleepiness_recovery_rate *= 1.2
+            self.immunity = min(0.9, self.immunity * 1.2)
+        if self.level == 3 and age.days > 2:
+            self.level = 4
+            self.max_food *= 1.5
+            self.hunger_rate *= 1.5
+            self.max_happiness *= 1.5
+            self.sadness_rate *= 0.8
+            self.max_cleanliness *= 1.5
+            self.dirt_rate *= 0.8
+            self.max_sleepiness *= 1.5
+            self.sleepiness_rate *= 0.8
+            self.sleepiness_recovery_rate *= 1.2
+            self.immunity = min(0.9, self.immunity * 1.2)
+        if self.level == 4 and age.days > 6:
+            old_days = age.days - 6
+            if old_days > 2 * self.age_tracker:
+                self.age_tracker += 1
+                self.max_food *= 0.9
+                self.hunger_rate *= 1
+                self.max_happiness *= 1
+                self.sadness_rate *= 1.2
+                self.max_cleanliness *= 0.9
+                self.dirt_rate *= 1
+                self.max_sleepiness *= 0.9
+                self.sleepiness_rate *= 1.2
+                self.sleepiness_recovery_rate *= 0.9
+                self.immunity *= 0.9
+
+
+    def generate_dna(self):
+        for x in range(3):
+            self.dna.append(random.randint(1,2))
+
     ##############INTERACTIONS WITH PLAYER###########
 
-    def show(self, context):
-        self.context = context
+    async def show(self, context=None):
+        if context is not None:
+            self.context = context
+        if self.context is not None:
+            path = os.path.dirname(os.path.abspath(__file__))
+            path = os.path.join(path, 'images')
+            if self.lights:
+                for x in range(self.level):
+                    path = os.path.join(path, str(self.dna[x]))
+                image_expander.expand(path)
+                path = os.path.join(path, 'expanded_pet.png')
+            elif self.asleep:
+                path = os.path.join(path, 'expanded_sleep.png')
+            else:
+                path = os.path.join(path, 'expanded_dark.png')
+            await context.send(self.name, file=discord.File(path))
 
     async def show_status(self, context):
         self.context = context
@@ -102,7 +218,7 @@ class Pet:
             sleeping = 'Yes'
         else:
             sleeping = 'No'
-        await context.send(f'<@{self.player_id}>\'s pet {self.name} (Lv. {self.level}):\n' +
+        await context.send(f'<@{self.player_id}>\'s pet {self.name}:\n' +
                            f'Hunger: {self.current_food:.0f} / {self.max_food:.0f} \n' +
                            f'Happiness: {self.current_happiness:.0f} / {self.max_happiness:.0f}\n' +
                            f'Cleanliness: {self.cleanliness:.0f} / {self.max_cleanliness:.0f}\n' +
@@ -166,3 +282,8 @@ class Pet:
 
     def choose_status_to_show(self):
         return None
+
+    #################TEST FUNCTIONS#################
+
+    def level_up(self):
+        self.level = min(4, self.level + 1)

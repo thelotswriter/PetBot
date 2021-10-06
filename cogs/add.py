@@ -1,3 +1,6 @@
+import os
+import random
+
 import discord
 from discord.ext import commands
 
@@ -34,8 +37,31 @@ class Add(commands.Cog):
             else:
                 valid_name = True
             if valid_name:
-                pet_manager.add_pet(pid, len(pet_manager.pets), pet_name)
+                path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+                path = os.path.join(path, 'images')
+                for x in range(4):
+                    y = x + 1
+                    await context.send(f'Option {y}:',
+                                       file=discord.File(os.path.join(os.path.join(path, str(y)), 'expanded_egg.png')))
+                await context.send('Which egg would you like? Enter 1, 2, 3, 4 to choose. '
+                                   'Otherwise, enter something else for a random choice.')
+                selection = await self.client.wait_for('message',
+                                                       check=lambda message: message.author == context.author)
+                selection = selection.content
+                if '1' in selection and len(selection) == 1:
+                    dna = [1]
+                elif '2' in selection and len(selection) == 1:
+                    dna = [2]
+                elif '3' in selection and len(selection) == 1:
+                    dna = [3]
+                elif '4' in selection and len(selection) == 1:
+                    dna = [4]
+                else:
+                    dna = [random.randint(1, 4)]
+                pet_manager.add_pet(pid, pet_name, dna)
                 await context.send(f'Your pet, {pet_name}, is ready!')
+            else:
+                await context.send(f'Sorry, you already have a pet named {pet_name}. Please try a different name.')
         else:
             await context.send('Sorry, you don\'t have room for more pets right now.')
 
