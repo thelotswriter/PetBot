@@ -1,12 +1,13 @@
 from the_pet import Pet
 from the_egg import Egg
+import datetime
 
 player_pets = dict()
 pets = []
 
 
 def add_pet(owner, name, dna):
-    new_pet = Pet(owner, name=name, dna=dna)
+    new_pet = Pet(owner, name=name, birthday=datetime.datetime.now(), dna=dna)
     if owner not in player_pets:
         player_pets[owner] = dict()
     player_pets[owner][name] = new_pet
@@ -14,7 +15,7 @@ def add_pet(owner, name, dna):
 
 
 def hatch_pet(owner, name, egg):
-    new_pet = Pet(owner, name=name, max_food=egg.max_food, base_food=egg.max_food, hunger_rate=egg.hunger_rate,
+    new_pet = Pet(owner, name=name, birthday=datetime.datetime.now(), max_food=egg.max_food, base_food=egg.max_food, hunger_rate=egg.hunger_rate,
                   base_hunger_rate=egg.hunger_rate,  max_happiness=egg.max_happiness, base_happiness=egg.max_happiness,
                   sadness_rate=egg.sadness_rate, base_sadness_rate=egg.sadness_rate, max_clean=egg.max_cleanliness,
                   base_clean=egg.max_cleanliness, dirt_rate=egg.dirt_rate, base_dirt_rate=egg.dirt_rate,
