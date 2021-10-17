@@ -3,6 +3,7 @@ from discord.ext import commands
 
 import egg_manager
 import pet_manager
+import player_manager
 import the_pet
 
 
@@ -15,26 +16,21 @@ class Collect(commands.Cog):
     async def collect(self, context, *, message=None):
         player = context.author
         pid = player.id
-        if pid not in egg_manager.player_eggs or (pid in egg_manager.player_eggs and len(egg_manager.player_eggs[pid]) < 3):
-            if pid in pet_manager.player_pets:
-                if message is None:
-                    await context.send(f'Which pet would you like to collect from, <@{pid}>?')
-                    message = await self.client.wait_for('message',
-                                                         check=lambda message: message.author == context.author)
-                    message = message.content
-                counter = 0
-                for pet_name in pet_manager.player_pets[pid].keys():
-                    if pet_name in message:
-                        counter += 1
-                        egg_manager.add_egg(pid, pet_manager.player_pets[pid][pet_name])
-                        await context.send('Your egg has been collected!')
-                        break
-                if counter == 0:
-                    await context.send('Sorry, no such pet found!')
+        if egg_manager.can_add(pid):
+            if message is None:
+                await context.send(f'Which pet would you like to collect from, <@{pid}>?')
+                message = await self.client.wait_for('message',
+                                                     check=lambda message: message.author == context.author)
+                message = message.content
+            pet = pet_manager.get_pet(pid, message)
+            if pet is not None:
+                egg_manager.add_egg(pid, pet)
+                await context.send(f'Your egg has been collected, <@{pid}>.')
             else:
-                await context.send('Sorry, no pets to collect eggs from!')
+                await context.send(f'You don\'t have a pet named {message}, <@{pid}>')
         else:
-            await context.send('Sorry, you don\'t have room for more eggs right now.')
+            await context.send(f'Sorry, looks like you can\'t add any more eggs right now, <@{pid}>.')
+
 
 def setup(client):
     client.add_cog(Collect(client))

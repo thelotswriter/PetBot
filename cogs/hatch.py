@@ -4,6 +4,7 @@ import os
 
 import egg_manager
 import pet_manager
+import player_manager
 import the_pet
 
 
@@ -16,28 +17,24 @@ class Hatch(commands.Cog):
     async def hatch(self, context):
         player = context.author
         pid = player.id
-        if pid in pet_manager.player_pets and len(pet_manager.player_pets[pid]) >= 3:
-            await context.send(f'Sorry, looks like you have too many pets right now, <@{pid}>.')
-        elif pid not in egg_manager.player_eggs:
-            await context.send(f'Sorry <@{pid}>, you don\'t have any eggs right now.')
-        else:
-            egg_ids = []
+        pleggs = egg_manager.get_player_eggs(pid)
+        if len(pleggs) > 0:
             path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
             path = os.path.join(path, 'images')
-            for egg in egg_manager.player_eggs[pid]:
-                egg_ids.append(egg)
-                egg_path = os.path.join(path, str(egg_manager.player_eggs[pid][egg].dna[0]))
-                await context.send(f'Option {len(egg_ids)}:',
+            x = 0
+            for egg in pleggs:
+                egg_path = os.path.join(path, str(egg.dna[0]))
+                await context.send(f'Egg {egg.egg_id}:',
                                    file=discord.File(os.path.join(egg_path, 'expanded_egg.png')))
-            await context.send('Which egg would you like? Enter the option number to choose (1, 2, 3, etc).')
+            await context.send('Which egg would you like? Enter the egg number *only* to choose.')
             selection = await self.client.wait_for('message',
                                                    check=lambda message: message.author == context.author)
-            selection = selection.content
+            egg_selection = selection.content
+            egg = None
             selected = False
-            for x in range(len(egg_ids)):
-                y = x + 1
-                if str(y) == selection:
-                    egg = egg_manager.retrieve_egg(pid, egg_ids[x])
+            for an_egg in pleggs:
+                if str(an_egg.egg_id) == egg_selection:
+                    egg = an_egg
                     await context.send(f'What would you like to name the hatchling, <@{pid}>?')
                     name = await self.client.wait_for('message',
                                                            check=lambda message: message.author == context.author)
@@ -49,6 +46,8 @@ class Hatch(commands.Cog):
                 await context.send(f'Your pet, {name}, has been hatched!')
             else:
                 await context.send('Sorry, that\'s not a valid selection.')
+        else:
+            await context.send(f'Looks like you don\'t have any eggs, <@{pid}>.')
 
 
 def setup(client):

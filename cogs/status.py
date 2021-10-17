@@ -13,20 +13,7 @@ class Status(commands.Cog):
     async def status(self, context, *, message=None):
         player = context.author
         pid = player.id
-        if pid in pet_manager.player_pets:
-            if message is not None:
-                counter = 0
-                for pet_name in pet_manager.player_pets[pid].keys():
-                    if pet_name in message:
-                        counter += 1
-                        await pet_manager.player_pets[pid][pet_name].show_status(context)
-                    if counter == 0:
-                        await context.send(f'No pets named {message} for you, <@{pid}>.')
-            else:
-                for pet_name in pet_manager.player_pets[pid].keys():
-                    await pet_manager.player_pets[pid][pet_name].show_status(context)
-        else:
-            await context.send('Sorry, no pets to show!')
+        await pet_manager.status(pid, pet_name=message, context=context)
 
 
 def setup(client):

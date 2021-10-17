@@ -1,20 +1,17 @@
 import datetime
 import random
 
+import db_manager
+import player_manager
+from the_player import Player
 from the_pet import Pet
 import pet_manager
 from the_egg import Egg
 
-player_eggs = dict()
-eggs = []
 
-
+# Creates a new egg based on the parent
 def add_egg(owner, parent):
     if parent.tot_mins > 0:
-        egg_id = 0
-        for egg in eggs:
-            if egg.egg_id > egg_id:
-                egg_id = egg.egg_id + 1
         max_food = parent.base_food
         hunger_rate = parent.base_hunger_rate
         max_happiness = parent.base_happiness
@@ -26,7 +23,7 @@ def add_egg(owner, parent):
         sleepiness_rate = parent.base_sleepiness_rate
         sleepiness_recovery_rate = parent.base_sleepiness_recovery_rate
         age = datetime.datetime.now() - parent.birthday
-        for x in range(age.days + 1):
+        for x in range(age.days):
             r = random.randint(1, 10)
             if r == 1:
                 food = parent.avg_food / parent.tot_mins
@@ -88,51 +85,46 @@ def add_egg(owner, parent):
                     sleepiness_recovery_rate = max(0.5, sleepiness_recovery_rate * 0.9)
                 elif sleep < 0.35:
                     sleepiness_recovery_rate = min(4.0, sleepiness_recovery_rate * 1.1)
-        new_egg = Egg(owner, egg_id=egg_id, max_food=max_food, hunger_rate=hunger_rate, max_happiness=max_happiness,
+        new_egg = Egg(owner, max_food=max_food, hunger_rate=hunger_rate, max_happiness=max_happiness,
                       sadness_rate=sadness_rate, max_clean=max_clean, dirt_rate=dirt_rate, immunity=immunity,
                       max_sleepiness=max_sleepiness, sleepiness_rate=sleepiness_rate,
                       sleepiness_recovery_rate=sleepiness_recovery_rate, dna=parent.dna)
-
-        if owner not in player_eggs:
-            player_eggs[owner] = dict()
-        player_eggs[owner][egg_id] = new_egg
-        eggs.append(new_egg)
+        connection = db_manager.create_connection()
+        db_manager.add_egg(connection,  new_egg)
+        if not player_manager.has_player(owner):
+            player_manager.add_player(Player(owner))
+        player_manager.add_egg_to_player(owner, new_egg)
     else:
         print('Not added')
 
+
+# Gets the egg, if it exists. Also removes the egg from the storage structures
 def retrieve_egg(owner, egg_id):
-    if owner in player_eggs:
-        egg = player_eggs[owner][egg_id]
-        del player_eggs[owner][egg_id]
-        if len(player_eggs[owner]) <= 0:
-            del player_eggs[owner]
-        eg = 0
-        for eg in range(len(eggs)):
-            if eggs[eg].player_id == owner and eggs[eg].egg_id == egg_id:
-                del eggs[eg]
-                break
+    if player_manager.has_player(owner):
+        player = player_manager.get_player(owner)
+        egg = player.eggs[egg_id]
+        player_manager.remove_egg(egg)
+        connection = db_manager.create_connection()
+        db_manager.remove_egg(connection, egg)
         return egg
     return None
 
-# async def update_pets(context=None):
-#     deceased_pets = []
-#     for a_pet in pets:
-#         a_pet.update(context)
-#         if not a_pet.alive:
-#             deceased_pets.append(a_pet)
-#             context = a_pet.context
-#     for passed_pet in deceased_pets:
-#         del player_pets[passed_pet.player_id][passed_pet.name]
-#         if len(player_pets[passed_pet.player_id]) <= 0:
-#             del player_pets[passed_pet.player_id]
-#         p = 0
-#         for p in range(len(pets)):
-#             if pets[p].player_id == passed_pet.player_id and pets[p].name == passed_pet.name:
-#                 del pets[p]
-#                 break
-#     if len(deceased_pets) > 1:
-#         await context.send(f'Unfortunately, {len(deceased_pets)} pets have passed away.')
-#     elif len(deceased_pets) > 0:
-#         await context.send(f'{deceased_pets[0].name} has passed away.')
-#     return deceased_pets
 
+# Gets the eggs belonging to a player. Returns a list of eggs.
+def get_player_eggs(owner):
+    eggs = []
+    if player_manager.has_player(owner):
+        for egg in player_manager.get_player(owner).eggs:
+            eggs.append(player_manager.get_player(owner).eggs[egg])
+    return eggs
+
+
+# Checks if the owner can add another egg
+def can_add(owner):
+    if player_manager.has_player(owner):
+        player = player_manager.get_player(owner)
+        n_eggs = len(player.eggs)
+        max_eggs = player.max_eggs
+        if n_eggs >= max_eggs:
+            return False
+    return True

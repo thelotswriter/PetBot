@@ -15,33 +15,10 @@ class Lights(commands.Cog):
         pid = player.id
         if message is None:
             await context.send('Lights on or off?')
-        elif 'on' in message:
-            if pid in pet_manager.player_pets:
-                counter = 0
-                for pet_name in pet_manager.player_pets[pid].keys():
-                    if pet_name in message:
-                        counter += 1
-                        pet_manager.player_pets[pid][pet_name].lights_on()
-                if counter == 0:
-                    for pet_name in pet_manager.player_pets[pid].keys():
-                        print(pet_name)
-                        pet_manager.player_pets[pid][pet_name].lights_on()
-            else:
-                await context.send('Sorry, no pets to turn lights on for!')
-        elif 'off' in message:
-            if pid in pet_manager.player_pets:
-                counter = 0
-                for pet_name in pet_manager.player_pets[pid].keys():
-                    if pet_name in message:
-                        counter += 1
-                        pet_manager.player_pets[pid][pet_name].lights_off()
-                        await context.send(f'Lights off for {pet_name}@')
-                if counter == 0:
-                    for pet_name in pet_manager.player_pets[pid].keys():
-                        pet_manager.player_pets[pid][pet_name].lights_off()
-                    await context.send(f'Lights were turned off, <@{pid}>.')
-            else:
-                await context.send('Sorry, no pets to turn the lights off for!')
+            message = await self.client.wait_for('message',
+                                                       check=lambda message: message.author == context.author)
+            message = message.content
+        await pet_manager.lights(pid, message, context=context)
 
 
 def setup(client):

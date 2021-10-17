@@ -4,6 +4,7 @@ import random
 import discord
 from discord.ext import commands
 
+import player_manager
 import pet_manager
 
 
@@ -16,27 +17,15 @@ class Add(commands.Cog):
     async def add(self, context, *, message=None):
         player = context.author
         pid = player.id
-        can_add = True
-        if pid in pet_manager.player_pets.keys():
-            if len(pet_manager.player_pets[pid]) >= 3:
-                can_add = False
-        if can_add:
-            valid_name = False
+        if player_manager.can_add_pet(pid):
             if message is None:
                 await context.send(f'What would you like to name your pet, <@{pid}>?!')
                 pet_name_message = await self.client.wait_for('message',
                                                               check=lambda message: message.author == context.author)
-                pet_name = pet_name_message.content
+                message = pet_name_message.content
+            if player_manager.has_pet(pid, message):
+                await context.send(f'Looks like you already have a pet with the name {message}.')
             else:
-                pet_name = message
-            if pid in pet_manager.player_pets.keys():
-                if pet_name in pet_manager.player_pets[pid].keys():
-                    await context.send('Sorry, no duplicate names!')
-                else:
-                    valid_name = True
-            else:
-                valid_name = True
-            if valid_name:
                 path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
                 path = os.path.join(path, 'images')
                 for x in range(4):
@@ -58,12 +47,10 @@ class Add(commands.Cog):
                     dna = [4]
                 else:
                     dna = [random.randint(1, 4)]
-                pet_manager.add_pet(pid, pet_name, dna)
-                await context.send(f'Your pet, {pet_name}, is ready!')
-            else:
-                await context.send(f'Sorry, you already have a pet named {pet_name}. Please try a different name.')
+                pet_manager.add_pet(pid, message, dna)
+                await context.send(f'{message} has come home to <@{pid}>\'s home!')
         else:
-            await context.send('Sorry, you don\'t have room for more pets right now.')
+            await context.send(f'Looks like you can\'t add any more pets, <@{pid}>.')
 
 
 def setup(client):

@@ -9,6 +9,7 @@ class Update(commands.Cog):
     def __init__(self, client):
         self.client = client
 
+    # Secret command to force pet update
     @commands.command()
     async def update(self, context):
         await pet_manager.update_pets(context)

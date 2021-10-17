@@ -2,6 +2,7 @@ import os
 import discord
 
 
+# Defines eggs
 class Egg:
 
     def __init__(self, player_id, egg_id=0, max_food=5, hunger_rate=1.5, max_happiness=5, sadness_rate=1.5, max_clean=5, dirt_rate=0.75, immunity=0.5, max_sleepiness=5, sleepiness_rate=1.5, sleepiness_recovery_rate=1.5, dna=[]):
@@ -19,6 +20,7 @@ class Egg:
         self.sleepiness_recovery_rate = sleepiness_recovery_rate
         self.dna = dna
 
+    # Shows the egg
     async def show(self, context=None):
         if self.context is not None:
             path = os.path.dirname(os.path.abspath(__file__))

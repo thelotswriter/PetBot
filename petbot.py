@@ -1,13 +1,9 @@
 import asyncio
 import os
-import random
-import discord
 from discord.ext import commands
 
-import image_expander
+import db_manager
 import petbotengine as engine
-
-import numpy as np
 
 import torch
 import torch.nn as nn
@@ -15,11 +11,14 @@ import torch.optim as optim
 import torch.nn.functional as F
 import torchvision
 
+
+# Custom help command
 class PetHelpCommand(commands.HelpCommand):
 
     def __init__(self):
         super().__init__()
 
+    # Custom help command listing
     async def send_bot_help(self, mapping):
         command_list = []
         for cog in mapping:
@@ -40,33 +39,44 @@ class PetHelpCommand(commands.HelpCommand):
     async def send_command_help(self, command):
         return await super().send_command_help(command)
 
+
 token = os.getenv("DISCORD_TOKEN")
 
-client = commands.Bot(command_prefix=['<@!886644051829460992> ', '<@886644051829460992> ', '<@!888217121451044894> ', '<@888217121451044894> '], help_command=PetHelpCommand()) # '<@!886644051829460992> ')
+client = commands.Bot(command_prefix=['<@!886644051829460992> ', '<@886644051829460992> ', '<@!888217121451044894> ', '<@888217121451044894> '], help_command=PetHelpCommand())
+
 
 @client.event
 async def on_ready():
     print(f"{client.user} is connected!")
-    # engine.run()
-    # client.change_presence(activity=discord.Game('Ready for pets!'))
+
 
 @client.command()
 async def printtest(context, *, message):
     print(message)
 
+
+# Load cogs
 @client.command()
 async def load(ctx, extension):
     client.load_extension(f'cogs.{extension}')
+
 
 @client.command()
 async def unload(ctx, extension):
     client.unload_extension(f'cogs.{extension}')
 
-
+# Load cogs
 path = os.path.dirname(os.path.abspath(__file__))
 for filename in os.listdir(os.path.join(path, 'cogs')):
     if filename.endswith('.py'):
         client.load_extension(f'cogs.{filename[:-3]}')
 
+# Load players, pets, and eggs from database
+connection = db_manager.create_connection()
+with connection:
+    db_manager.create_tables(connection)
+    db_manager.get_players(connection)
+    db_manager.get_pets(connection)
+    db_manager.get_eggs(connection)
 asyncio.get_event_loop().create_task(engine.update())
 client.run(token)

@@ -11,3 +11,4 @@
 .venvs/
 .vscode/
 .bash_history
+/db/petsql.db

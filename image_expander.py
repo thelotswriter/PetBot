@@ -4,6 +4,7 @@ import numpy as np
 from PIL import Image
 
 
+# Creates an image of the selected pet four times larger than the base image.
 def expand(dirpath):
     destpath = join(dirpath, 'expanded_pet.png')
     if not exists(destpath):

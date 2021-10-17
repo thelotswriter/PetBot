@@ -8,10 +8,20 @@ from the_egg import Egg
 import image_expander
 
 
+# Defines a pet for players to care for. Includes all of its stats,
+# ability for players to interact with the pet, and ability for the
+# pet to interact with the player
 class Pet:
 
+    # Initialize values and run preliminary update
     def __init__(self, player_id, name='', level=0, birthday=datetime.datetime.now(), current_food=0.3, max_food=5,
-                 base_food=5, hunger_rate=1.5, base_hunger_rate=1.5, current_happiness=0.5, max_happiness=5, base_happiness=5, sadness_rate=1.5, base_sadness_rate=1.5, current_clean=1.0, max_clean=5, base_clean=5, dirt_rate=0.75, base_dirt_rate=0.75, immunity=0.5, base_immunity=0.5, sick=False, sleepiness=0, max_sleepiness=5, base_sleepiness=5, sleepiness_rate=1.5, base_sleepiness_rate=1.5, sleepiness_recovery_rate=1.5, base_sleepiness_recovery_rate=1.5, asleep=False, lights=True, dna=[], timestamp=datetime.datetime.now(), mute=False, context=None, age_tracker=0):
+                 base_food=5, hunger_rate=1.5, base_hunger_rate=1.5, current_happiness=0.5, max_happiness=5,
+                 base_happiness=5, sadness_rate=1.5, base_sadness_rate=1.5, current_clean=1.0, max_clean=5,
+                 base_clean=5, dirt_rate=0.75, base_dirt_rate=0.75, immunity=0.5, base_immunity=0.5, sick=False,
+                 sleepiness=0, max_sleepiness=5, base_sleepiness=5, sleepiness_rate=1.5, base_sleepiness_rate=1.5,
+                 sleepiness_recovery_rate=1.5, base_sleepiness_recovery_rate=1.5, asleep=False, lights=True, dna=[],
+                 timestamp=datetime.datetime.now(), mute=False, context=None, age_tracker=0, pet_id=0, avg_food=0.0,
+                 avg_happiness=0, avg_cleanliness=0, avg_sleepiness=0, avg_sick=0, tot_mins=0):
         self.player_id = player_id
         self.name = name
         self.level = level
@@ -53,29 +63,32 @@ class Pet:
         self.alive = True
         self.mute = mute
         self.context = context
+        self.pet_id = pet_id
         # Care tracking
-        self.avg_food = float(0)
-        self.avg_happiness = float(0)
-        self.avg_cleanliness = float(0)
-        self.avg_sleepiness = float(0)
-        self.avg_sick = float(0)
-        self.tot_mins = float(0)
+        self.avg_food = float(avg_food)
+        self.avg_happiness = float(avg_happiness)
+        self.avg_cleanliness = float(avg_cleanliness)
+        self.avg_sleepiness = float(avg_sleepiness)
+        self.avg_sick = float(avg_sick)
+        self.tot_mins = float(tot_mins)
         # Update pet
         self.update(loading_update=True)
 
     def set_context(self, context):
         self.context = context
 
+    # Update the pet's current state. This is run periodically
+    # by the engine.
     def update(self, loading_update=False, context=None):
         if context is not None:
             self.context = context
         cur_time = datetime.datetime.now()
         age = cur_time - self.birthday
         up_time = cur_time - self.last_check_time
+        # If the pet wasn't just created or checked, update stats
         if up_time.days > 0 or up_time.seconds > 10:
             if self.level == 0:
                 self.level = 1
-                # await context.send('Your egg has hatched, ' + self.player_id + '!')
             elif up_time.days > 10:
                 self.alive = False
             elif self.level > 0:
@@ -104,6 +117,7 @@ class Pet:
         self.update_level(age)
         self.last_check_time = cur_time
 
+    # Update when sleeping
     def sleep_update(self, hours):
         self.current_food -= self.hunger_rate * 0.25 * hours
         self.current_happiness -= self.sadness_rate * 0.1 * hours
@@ -113,6 +127,7 @@ class Pet:
         self.current_sleepiness = max(self.current_sleepiness, 0.0)
         self.choose_to_wake()
 
+    # Update when awake
     def awake_update(self, hours):
         self.current_food -= self.hunger_rate * hours
         self.current_happiness -= self.sadness_rate * hours
@@ -130,13 +145,15 @@ class Pet:
         self.current_sleepiness = min(self.current_sleepiness, self.max_sleepiness)
         self.choose_to_sleep()
 
+    # Check if ready to progress to the next level or, if at level 4,
+    # if stats should decay
     def update_level(self, age):
         if self.level == 0:
             self.level = 1
         if self.level == 1 and (age.days > 0 or age.seconds > 60 * 60 * 4):
             self.level = 2
             self.max_food *= 1.5
-            self.hunger_rate *= 1.5
+            self.hunger_rate *= 0.8
             self.max_happiness *= 1.5
             self.sadness_rate *= 0.8
             self.max_cleanliness *= 1.5
@@ -184,13 +201,14 @@ class Pet:
                 self.sleepiness_recovery_rate *= 0.9
                 self.immunity *= 0.9
 
-
+    # Generates the dna. Called for new pets without a parent
     def generate_dna(self):
         for x in range(3):
             self.dna.append(random.randint(1,2))
 
     ##############INTERACTIONS WITH PLAYER###########
 
+    # Show what the pet looks like
     async def show(self, context=None):
         if context is not None:
             self.context = context
@@ -208,6 +226,7 @@ class Pet:
                 path = os.path.join(path, 'expanded_dark.png')
             await context.send(self.name, file=discord.File(path))
 
+    # List current stats
     async def show_status(self, context):
         self.context = context
         if self.sick:
@@ -226,32 +245,46 @@ class Pet:
                            f'Sick: {sickly}\n' +
                            f'Sleeping: {sleeping}')
 
+    # Increases current food
     def feed(self):
         self.current_food = min(self.max_food, self.current_food + 5)
 
+    # Increases current happiness
     def pet(self):
         self.current_happiness = min(self.max_happiness, self.current_happiness + 5)
 
+    # Increases current cleanliness
     def clean(self):
         if self.sick:
             self.cleanliness = min(self.max_cleanliness * 0.75, self.cleanliness + 10)
         else:
             self.cleanliness = self.max_cleanliness
 
+    # Heals a sick pet. Healthy pets will lose happiness if medicated
     def medicate(self):
         if not self.sick:
             self.current_happiness -= self.sadness_rate
             self.current_happiness = max(self.current_happiness, 0.0)
         self.sick = False
 
+    # Turns on the light
     def lights_on(self):
         self.lights = True
 
+    # Turns off the light
     def lights_off(self):
         self.lights = False
 
+    # Switches the light from on to off or off to on
+    def lights(self):
+        if self.lights:
+            self.lights = False
+        else:
+            self.lights = True
+
     #################LEARNED BEHAVIORS#################
 
+    # Chooses whether to wake from sleep
     def choose_to_wake(self):
         if self.lights and self.current_sleepiness <= 0.5 * self.max_sleepiness:
             self.asleep = False
@@ -262,6 +295,7 @@ class Pet:
         else:
             return False
 
+    # Choose to sleep
     def choose_to_sleep(self):
         if self.lights and self.current_sleepiness >= self.max_sleepiness * 0.9:
             self.asleep = True
@@ -272,6 +306,8 @@ class Pet:
         else:
             return False
 
+    # Currently does nothing. With AI, will be allowed to choose
+    # to send from a selection of messages (request food, petting, etc)
     def choose_to_alert(self):
         if self.context is None:
             return False
@@ -280,10 +316,12 @@ class Pet:
         else:
             return False
 
+    # Will choose if a status shoule be shown
     def choose_status_to_show(self):
         return None
 
     #################TEST FUNCTIONS#################
 
+    # Test function to level up
     def level_up(self):
         self.level = min(4, self.level + 1)
