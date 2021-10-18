@@ -13,7 +13,8 @@ def add_player(player):
 
 # Adds the pet to the player
 def add_pet_to_player(player_id, pet):
-    players[player_id].add_pet(pet)
+    the_player = get_player(player_id)
+    the_player.add_pet(pet)
 
 
 # Adds the egg to the player

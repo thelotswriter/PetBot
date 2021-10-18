@@ -105,7 +105,8 @@ async def status(owner, pet_name=None, context=None):
     if player_manager.has_player(owner):
         if pet_name is None:
             pet_check = False
-            for a_pet in player_manager.get_player(owner).pets:
+            player = player_manager.get_player(owner)
+            for a_pet in player.pets:
                 pet_check = True
                 await get_pet(owner, a_pet).show_status(context=context)
             if not pet_check:

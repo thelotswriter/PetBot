@@ -6,11 +6,11 @@ from the_egg import Egg
 # Represents the player
 class Player:
 
-    def __init__(self, player_id, pets=dict(), max_pets=3, eggs=dict(), max_eggs=3, xp=0):
+    def __init__(self, player_id, max_pets=3, max_eggs=3, xp=0):
         self.player_id = player_id
-        self.pets = pets
+        self.pets = dict()
         self.max_pets = max_pets
-        self.eggs = eggs
+        self.eggs = dict()
         self.max_eggs = max_eggs
         self.xp = xp
 
