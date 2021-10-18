@@ -162,10 +162,10 @@ class Pet:
             self.sleepiness_rate *= 0.8
             self.sleepiness_recovery_rate *= 1.2
             self.immunity = min(0.9, self.immunity * 1.2)
-        if self.level == 2 and age.days > 0:
+        if self.level == 2 and (age.days > 0 or age.seconds > 86400):
             self.level = 3
             self.max_food *= 1.5
-            self.hunger_rate *= 1.5
+            self.hunger_rate *= 0.8
             self.max_happiness *= 1.5
             self.sadness_rate *= 0.8
             self.max_cleanliness *= 1.5
@@ -174,7 +174,7 @@ class Pet:
             self.sleepiness_rate *= 0.8
             self.sleepiness_recovery_rate *= 1.2
             self.immunity = min(0.9, self.immunity * 1.2)
-        if self.level == 3 and age.days > 2:
+        if self.level == 3 and (age.days > 2 or age.seconds > 2 * 86400):
             self.level = 4
             self.max_food *= 1.5
             self.hunger_rate *= 1.5
@@ -186,8 +186,8 @@ class Pet:
             self.sleepiness_rate *= 0.8
             self.sleepiness_recovery_rate *= 1.2
             self.immunity = min(0.9, self.immunity * 1.2)
-        if self.level == 4 and age.days > 6:
-            old_days = age.days - 6
+        if self.level == 4 and (age.days > 6 or age.seconds > 6 * 86400):
+            old_days = age.seconds / 86400 - 6
             if old_days > 2 * self.age_tracker:
                 self.age_tracker += 1
                 self.max_food *= 0.9
