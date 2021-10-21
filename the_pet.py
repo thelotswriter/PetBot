@@ -1,4 +1,4 @@
-import datetime
+from datetime import datetime
 import os
 import discord
 from discord.ext import commands
@@ -14,13 +14,13 @@ import image_expander
 class Pet:
 
     # Initialize values and run preliminary update
-    def __init__(self, player_id, name='', level=0, birthday=datetime.datetime.now(), current_food=0.3, max_food=5,
+    def __init__(self, player_id, name='', level=0, birthday=datetime.now(), current_food=0.3, max_food=5,
                  base_food=5, hunger_rate=1.5, base_hunger_rate=1.5, current_happiness=0.5, max_happiness=5,
                  base_happiness=5, sadness_rate=1.5, base_sadness_rate=1.5, current_clean=1.0, max_clean=5,
                  base_clean=5, dirt_rate=0.75, base_dirt_rate=0.75, immunity=0.5, base_immunity=0.5, sick=False,
                  sleepiness=0, max_sleepiness=5, base_sleepiness=5, sleepiness_rate=1.5, base_sleepiness_rate=1.5,
                  sleepiness_recovery_rate=1.5, base_sleepiness_recovery_rate=1.5, asleep=False, lights=True, dna=[],
-                 timestamp=datetime.datetime.now(), mute=False, context=None, age_tracker=0, pet_id=0, avg_food=0.0,
+                 timestamp=datetime.now(), mute=False, context=None, age_tracker=0, pet_id=0, avg_food=0.0,
                  avg_happiness=0, avg_cleanliness=0, avg_sleepiness=0, avg_sick=0, tot_mins=0):
         self.player_id = player_id
         self.name = name
@@ -82,9 +82,8 @@ class Pet:
     def update(self, loading_update=False, context=None):
         if context is not None:
             self.context = context
-        cur_time = datetime.datetime.now()
-        age = cur_time - self.birthday
-        up_time = cur_time - self.last_check_time
+        age = datetime.now() - self.birthday
+        up_time = datetime.now() - self.last_check_time
         # If the pet wasn't just created or checked, update stats
         if up_time.days > 0 or up_time.seconds > 10:
             if self.level == 0:
@@ -115,7 +114,7 @@ class Pet:
                     self.avg_sick += up_mins
                 self.tot_mins += up_mins
         self.update_level(age)
-        self.last_check_time = cur_time
+        self.last_check_time = datetime.now()
 
     # Update when sleeping
     def sleep_update(self, hours):
@@ -162,7 +161,7 @@ class Pet:
             self.sleepiness_rate *= 0.8
             self.sleepiness_recovery_rate *= 1.2
             self.immunity = min(0.9, self.immunity * 1.2)
-        if self.level == 2 and (age.days > 0 or age.seconds > 86400):
+        if self.level == 2 and age.days > 0:
             self.level = 3
             self.max_food *= 1.5
             self.hunger_rate *= 0.8
@@ -174,7 +173,7 @@ class Pet:
             self.sleepiness_rate *= 0.8
             self.sleepiness_recovery_rate *= 1.2
             self.immunity = min(0.9, self.immunity * 1.2)
-        if self.level == 3 and (age.days > 2 or age.seconds > 2 * 86400):
+        if self.level == 3 and age.days > 2:
             self.level = 4
             self.max_food *= 1.5
             self.hunger_rate *= 1.5
@@ -186,7 +185,7 @@ class Pet:
             self.sleepiness_rate *= 0.8
             self.sleepiness_recovery_rate *= 1.2
             self.immunity = min(0.9, self.immunity * 1.2)
-        if self.level == 4 and (age.days > 6 or age.seconds > 6 * 86400):
+        if self.level == 4 and age.days > 6:
             old_days = age.seconds / 86400 - 6
             if old_days > 2 * self.age_tracker:
                 self.age_tracker += 1
